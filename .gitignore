@@ -78,3 +78,7 @@ target/
 
 # Mac OS-specific storage files
 .DS_Store
+
+### Ignore outputs and checkpiints
+/out/
+/checkpoints/
