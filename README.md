@@ -2,7 +2,9 @@
 ==============================
 # OTAlign
 
-Code for paper "Gromov Wasserstein Alignment of Word Embedding Spaces"
+Code for paper "Gromov Wasserstein Alignment of Word Embedding Spaces".
+
+Disclaimer: This codebase borrows some embbedding and evaluation tools from Mikel Artetxe's [vecmap] (https://github.com/artetxem/vecmap) repo, and relies on the Gromov-Wasserstein implementation of the Python Optimal Transport [POT](https://github.com/rflamary/POT) from Remi Flamary and colleagues.
 
 ## Dependencies
 
@@ -38,7 +40,7 @@ cp -r /path/to/dinu/dir/data/* ./data/raw/dinu/
 ## How to use
 
 ```
-python scripts/main_gw_bli.py --src en --trg es
+python scripts/main_gw_bli.py --task conneau --src en --trg es --maxiter 50
 ```
 
 ## Issues
