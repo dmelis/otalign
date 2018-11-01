@@ -4,7 +4,7 @@
 
 Code for paper "Gromov Wasserstein Alignment of Word Embedding Spaces".
 
-Disclaimer: This codebase borrows some embbedding and evaluation tools from Mikel Artetxe's [vecmap] (https://github.com/artetxem/vecmap) repo, and relies on the Gromov-Wasserstein implementation of the Python Optimal Transport [POT](https://github.com/rflamary/POT) from Remi Flamary and colleagues.
+Disclaimer: This codebase borrows some embbedding and evaluation tools from Mikel Artetxe's [vecmap](https://github.com/artetxem/vecmap) repo, and relies on the Gromov-Wasserstein implementation of the Python Optimal Transport [POT](https://github.com/rflamary/POT) from Remi Flamary and colleagues.
 
 ## Dependencies
 
