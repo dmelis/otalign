@@ -6,7 +6,7 @@ setup(name='otalign',
       url='http://github.com/dmelis/otalign',
       author='David Alvarez Melis',
       author_email='dalvmel@mit.edu',
-      license='MIT',
+      license='GPL v3.0',
       packages= find_packages(),#exclude=['js', 'node_modules', 'tests']),
       install_requires=[
           'numpy',

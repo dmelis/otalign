@@ -7,9 +7,6 @@
     the very thorough codebase by Artetxe https://github.com/artetxem
 
 """
-
-
-
 import sys
 import os
 import argparse
@@ -21,20 +18,11 @@ import pickle
 import scipy as sp
 import numpy as np
 import matplotlib
-if os.environ['USER'] == 'davidam':
-    # Hack to be able to save plots in janis
-    matplotlib.use('Agg')
 import matplotlib.pylab as plt
 
 import pdb
 import argparse
 import ot
-
-
-# Local imports
-#from os.path import dirname, realpath
-#sys.path.append(os.path.join(dirname(realpath(__file__)), 'codebase/'))
-
 
 from src.bilind import gromov_bilind, bilingual_mapping
 import src.embeddings as embeddings
@@ -55,7 +43,7 @@ def load_results(outdir, BLI):
     BLI.coupling = results['G']
     return BLI
 
-def load_vectors(args):#, src, trg, encoding, maxs, maxt):
+def load_vectors(args):
     """
         Assumes file structure as in MUSE repo.
     """
@@ -86,7 +74,7 @@ def load_vectors(args):#, src, trg, encoding, maxs, maxt):
         if args.src_lang == 'en':
             order = order[::-1]
         data_dir = os.path.join(args.home_dir,'pkg/UBiLexAT/data/','-'.join(order))
-        dict_dir = data_dir #os.path.join(data_dir, 'all.' + '-'.join(order) + '.lex')
+        dict_dir = data_dir
         src_path = os.path.join(data_dir, 'word2vec.' + args.src_lang)
         trg_path = os.path.join(data_dir, 'word2vec.' + args.trg_lang)
         src_freq_path = os.path.join(data_dir, 'vocab-freq.' + args.src_lang)
@@ -135,8 +123,8 @@ def load_vectors(args):#, src, trg, encoding, maxs, maxt):
     for line in dictf:
         splitted = line.split()
         if len(splitted) > 2:
+            # Only using first translation if many are provided
             src, trg = splitted[:2]
-            #FIXME - use all translations?
         elif len(splitted) == 2:
             src, trg = splitted
         else:
@@ -172,7 +160,7 @@ def parse_args():
     ### General Task Options
     general = parser.add_argument_group('General task options')
     general.add_argument('--debug',action='store_true',
-                    help='trigger debugging mode (no saving)')
+                    help='trigger debugging mode (saving to /tmp/)')
     general.add_argument('--src_lang', type=str,
                          default='en', help='source language')
     general.add_argument('--trg_lang', type=str,
@@ -237,11 +225,11 @@ def parse_args():
     args = parser.parse_args()
 
     if args.debug:
-        args.verbose      = True # or 2?
-        args.chkpt_path   = '/tmp/' #None
-        args.results_path = '/tmp/' #None
-        args.log_path     = '/tmp/' #None
-        args.summary_path = '/tmp/' #None
+        args.verbose      = True
+        args.chkpt_path   = '/tmp/'
+        args.results_path = '/tmp/'
+        args.log_path     = '/tmp/'
+        args.summary_path = '/tmp/'
 
     print("\nParameters:")
     for attr, value in sorted(args.__dict__.items()):
@@ -285,7 +273,6 @@ def print_header(method):
 
 def main():
     """
-        TODO: Add checkpointing.
 
         Pass outpath=checkpotins/bla to solve()
         Save progress plots, and current G and P in a pkl file:
@@ -332,18 +319,16 @@ def main():
         if outdir:
             BLI.solver.plot_history(save_path=os.path.join(outdir, 'history.pdf'))
             acc = 0
-            #pdb.set_trace()
             dump_results(outdir, args, optim_args, acc, BLI)
         else:
             BLI.solver.plot_history()
         print('Done!')
     else:
-        ##BLI.load_from_file(os.path.join(outdir, "results.pkl")) #TODO: change to this once models are trained with it
         print('Will load pre-solved solution from: ', outdir)
         BLI = load_results(outdir, BLI)
 
 
-    # Infer mapping
+    ### Infer mapping from coupling - there's many ways to do this.
     #BLI.mapping = BLI.get_mapping(anchor_method = 'mutual_nn', max_anchors = 5000)
     #BLI.mapping = BLI.get_mapping(anchor_method = 'barycenter')
     #BLI.mapping = BLI.get_mapping(anchor_method = 'all')
@@ -374,11 +359,10 @@ def main():
         print('Saving in-vocabulary translations and mapped vectors')
         translation_file = os.path.join(outdir, "translations_transductive.tsv")
         BLI.dump_translations(src2trg, translation_file)
-        #BLI.export_mapped(iov_mode='matched', outf=outdir, suffix = 'match')
+        #BLI.export_mapped(iov_mode='matched', outf=outdir, suffix = 'match') # Only needed for debug/analysis purposes
         BLI.export_mapped(iov_mode='projection', outf=outdir, suffix = 'proj')
 
 
-    #pdb.set_trace()
     ### STEP 2: Out-of sample vectors
     print('************')
     print('Compute now for all vectors')

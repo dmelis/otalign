@@ -1,3 +1,7 @@
+"""
+    Optimization methods to solve the Gromov-Wasserstein problem.
+"""
+
 import os
 import numpy as np
 import scipy as sp
@@ -28,7 +32,6 @@ def orth_procrustes(X, Y, drag=None):
     P = U@Vh
     return P
 
-
 def gw_imports(use_gpu):
     global bregman, gwggrad, gwloss, cdist
     if use_gpu:
@@ -36,7 +39,6 @@ def gw_imports(use_gpu):
         global cm, pairwiseEuclideanGPU, init_matrix, cosine_distance_gpu, sinkhorn
         import cudamat as cm
         from ot.gpu import bregman
-        #import blabla
         from ot.gpu.da import pairwiseEuclideanGPU
         from gpu_utils import cdist
         from gromov_gpu import gwggrad, gwloss, init_matrix, sinkhorn
@@ -160,12 +162,7 @@ def sinkhorn_knopp(a, b, M, reg, init_u=None, init_v=None, numItermax=1000,
             v = np.ones(Nfin) / Nfin
     uprev = np.zeros(Nini)
     vprev = np.zeros(Nini)
-
-    # print(reg)
-
     K = np.exp(-M / reg)
-    # print(np.min(K))
-
     Kp = (1 / a).reshape(-1, 1) * K
     it = 0
     err = 1
@@ -322,14 +319,13 @@ class gromov_wass_solver():
         ax[3].set_ylabel('Accuracy (%)')
         ax[3].legend()
 
-        # ax[1].plot()
         plt.tight_layout()
         if save_path:
             plt.savefig(save_path, bbox_inches='tight', format='pdf', dpi=300)
         plt.show(block=False)
 
     def compute_distances(self, X, Y):
-        print('Computing intra-domain distance matrices...')  # , end = '')
+        print('Computing intra-domain distance matrices...')
 
         if not self.gpu:
             C1 = sp.spatial.distance.cdist(X, X, metric=self.metric)

@@ -29,7 +29,6 @@ import ot
 try:  # test if cudamat installed
     from ot.gpu import bregman
     from gw_optim_gpu import gromov_wass_solver
-    #from optim import gromov_wass_solver
 except ImportError:
     from src.gw_optim import gromov_wass_solver
 
@@ -41,11 +40,9 @@ def pprint_golddict(d, src, tgt):
         print(  '{:20s} <-> {:20s}'.format(src[i],','.join([tgt[i] for i in vals])))
 
 def zipf_init(lang, n):
-    # Piantadosi, 2014
-    #alpha = 1.13 # These numbers are tailoted to english, maybe get best per language?
-    #beta  = 2.73
+    # See (Piantadosi, 2014)
     if lang == 'en':
-        alpha, beta = 1.40, 1.88 #1.13, 2.73
+        alpha, beta = 1.40, 1.88 #Other sources give: 1.13, 2.73
     elif lang == 'fi':
         alpha, beta = 1.17, 0.60
     elif lang == 'fr':
@@ -55,12 +52,11 @@ def zipf_init(lang, n):
     elif lang == 'es':
         alpha, beta = 1.84, 3.81
     else: # Deafult to EN
-        alpha, beta = 1.40, 1.88 #1.13, 2.73
+        alpha, beta = 1.40, 1.88
     p = np.array([1/((i+1)+beta)**(alpha) for i in range(n)])
     return p/p.sum()
 
-
-class bilingual_mapping(): #rename ot_bilingual_mapping
+class bilingual_mapping():
     """
         Generic class with a lot of useful methods for bilingual mappings
     """
@@ -171,7 +167,7 @@ class bilingual_mapping(): #rename ot_bilingual_mapping
             adjust = self.adjust
         if self.coupling is None:
             raise ValueError('Optimal coupling G has not been computed yet')
-        self.compute_scores(score_type, adjust, verbose = verbose > 1)  # adjust = 'csls',)
+        self.compute_scores(score_type, adjust, verbose = verbose > 1)
         accs = self.score_translations(self.test_dict, verbose = verbose > 1)
         if verbose > 0:
             for k, v in accs.items():
@@ -203,13 +199,7 @@ class bilingual_mapping(): #rename ot_bilingual_mapping
         assert self.mapping is not None
         idx_src = [k for k in src2trg.keys()]
         # Only compute scores for src words we will need (but all trg words, otherwise it's cheating!)
-        pdb.set_trace()
         nn, scores = csls_sparse(xs, xt@self.mapping, idx_src, range(xt.shape[0]), knn = 10)
-        pdb.set_trace()
-        # scores = -sp.spatial.distance.cdist(xs, xt@self.mapping, metric=self.metric)
-        # if adjust == 'csls':
-        #     scores = csls(scores, knn = 10)
-        # Lazy approach: overwrite everything
         self.xs = xs
         self.xt = xt
         self.src_words = src_words
@@ -243,8 +233,6 @@ class bilingual_mapping(): #rename ot_bilingual_mapping
             ot_emd.xs_ = self.xs
             ot_emd.xt_ = self.xt
             ot_emd.coupling_= self.coupling
-            #xs_t = ot_emd.transform(Xs=self.xs) # Maps source samples to target space
-            #scores = -sp.spatial.distance.cdist(xs_t, self.xt, metric = self.metric) #FIXME: should this be - dist?
             xt_s = ot_emd.inverse_transform(Xt=self.xt) # Maps target to source space
             scores = -sp.spatial.distance.cdist(self.xs, xt_s, metric = self.metric) #FIXME: should this be - dist?
         elif score_type == 'distance':
@@ -314,7 +302,6 @@ class bilingual_mapping(): #rename ot_bilingual_mapping
             else:
                 xt_hat = xt_hat_iov
 
-        # Use muse instead or in addition to this format?
         file_src = os.path.join(outf, ('vectors-%s.' + suffix + '.txt') % self.src_lang)
         file_trg = os.path.join(outf, ('vectors-%s.' + suffix + '.txt') % self.trg_lang)
 
@@ -351,16 +338,6 @@ class bilingual_mapping(): #rename ot_bilingual_mapping
                     row = '\t'.join([src_word,'||'] + predicted)
                     f.write(row + '\n')
 
-                # #print(predicted, targets)
-                # correct_strings = []
-                # for k in [1,5,10]:
-                #     if set(predicted[:k]).intersection(targets):
-                #         correct[k] +=1
-                #         correct_strings.append('\u2713')
-                #     else:
-                #         correct_strings.append('X')
-
-
     def score_translations(self, gold_dict, verbose = False):
         """
             predicted: dict srcw: [sorted candidates]
@@ -368,9 +345,7 @@ class bilingual_mapping(): #rename ot_bilingual_mapping
 
         """
         oov = set()
-        #correct = 0
         n,m = self.scores.shape # The actual size of mapping computed, might be smaller that total size of dict
-
         assert n == self.xs.shape[0], "Score matrix size does not match number of src vecs"
         assert m == self.xs.shape[0], "Score matrix size does not match number of trg vecs"
 
@@ -396,8 +371,6 @@ class bilingual_mapping(): #rename ot_bilingual_mapping
                 src_word = self.src_words[src_idx]
                 predicted = topk_predictions[src_word]
                 targets   = [self.trg_words[j] for j in tgt_idx]
-
-                #print(predicted, targets)
                 correct_strings = []
                 for k in [1,5,10]:
                     if set(predicted[:k]).intersection(targets):
@@ -504,9 +477,6 @@ class bilingual_mapping(): #rename ot_bilingual_mapping
         ax.bar(list(range(topk)), vals)
         ax.set_xticks(range(topk))
         ax.set_xticklabels(labels, rotation = 90)
-        # show horizontal line with marginal prob.
-        #if self.adjust == None:
-
         plt.show()
 
     def normalize_embeddings(self, xs = None, xt = None):
@@ -554,7 +524,6 @@ class bilingual_mapping(): #rename ot_bilingual_mapping
         """
         if not self.centered:
             raise ValueError("Whitenning needs centering to be done in advance")
-        #self._center_vectors()
         n,d = self.xs.shape
 
         Cov_s = np.cov(self.xs.T)
@@ -607,8 +576,6 @@ class procot_bilind(bilingual_mapping):
 
     def fit(self, maxiter = 100, plot_every = 100, print_every = 10,
             verbose = True, *args, **kwargs):
-
-        #test_fun = functools.partial(self.test_accuracy(G, ))
         if not self.solver:
             raise ValueError('Optimizer has not been initalized yet. Call init_optimizer before hand.')
 
@@ -640,9 +607,6 @@ class gromov_bilind(bilingual_mapping):
     """
     def __init__(self, *args, **kwargs):
         super(gromov_bilind, self).__init__(*args, **kwargs)
-
-        # Gromov Specific args
-        # Maybe put entropic, entreg here?
 
     def init_optimizer(self, *args, **kwargs):
         print('Initializing Gromov-Wasserstein optimizer')
@@ -681,10 +645,6 @@ class gromov_bilind(bilingual_mapping):
             P = orth_procrustes(xt_hat, self.xt)
         return P
 
-
-
-
-
     def fit(self, maxiter = 300, tol = 1e-9, print_every = None,
             plot_every = None, verbose = False, save_plots = None):
         """
@@ -704,9 +664,7 @@ class gromov_bilind(bilingual_mapping):
                                 plot_every = plot_every, print_every = print_every,
                                 verbose = verbose, save_plots = save_plots)
         self.coupling = G
-        #
-        # G = self.solve_gromovwass(entropic = entropic, reg = entreg,  verbose = verbose)
-        # self.coupling = G
+
 
         # 3. From Couplings to Translation Score
         print('Computing translation scores...')
@@ -733,9 +691,8 @@ class gromov_bilind(bilingual_mapping):
                                             epsilon=reg,
                                             log = True, verbose = verbose)
 
-
         #cost = np.sum(G * ot.gromov.tensor_square_loss(self.Cs, self.Ct, G))
-        cost = log['gw_dist']
+        cost = log['gw_dist'] # equivalent to above
 
         # 4. Analyze solution
         if verbose:
@@ -747,7 +704,6 @@ class gromov_bilind(bilingual_mapping):
             plt.colorbar()
             plt.show()
 
-        #self.coupling = G
         return G
 
     def local_matching(self, src_w, trg_w, k = 10, reg = 1e-3, max_iter = 100,
@@ -936,30 +892,11 @@ def compute_precision(gold_dict, src_word2ind, trg_word2ind, src_words, trg_word
         translation with highest score
 
     """
-    # TODO: Generalize to compute Prec @5, @10.
-    # Read dictionary and compute coverage
-#     dictf = open(args.dictionary, encoding=args.encoding, errors='surrogateescape')
-#     src2trg = collections.defaultdict(set)
-#     oov = set()
-#     vocab = set()
-#     for line in dictf:
-#         src, trg = line.split()
-#         try:
-#             src_ind = src_word2ind[src]
-#             trg_ind = trg_word2ind[trg]
-#             src2trg[src_ind].add(trg_ind)
-#             vocab.add(src)
-#         except KeyError:
-#             oov.add(src)
-#     oov -= vocab  # If one of the translation options is in the vocabulary, then the entry is not an oov
-#     coverage = len(src2trg) / (len(src2trg) + len(oov))
-
     oov = set()
     correct = 0
     n,m = scores.shape # The actual size of mapping computed, might be smaller that total size of dict
 
     precisions = {}
-
     if verbose:
         print('@{:2} {:10} {:30} {:30}'.format('k', 'Src','Predicted','Gold'))
         print_row = '{:2} {:10} {:30} {:30} {}'
@@ -971,12 +908,8 @@ def compute_precision(gold_dict, src_word2ind, trg_word2ind, src_words, trg_word
                 oov.add(src_idx)
                 continue
             else:
-                #print(k, src_idx, tgt_idx)
                 knn = np.argpartition(scores[src_idx,:], -k)[-k:] # argpartition returns top k not in order
                 knn_sort = knn[np.argsort(-scores[src_idx,knn])] # With - to get descending order
-
-                #print(src_words[src_idx], knn_sort, ' '.join([trg_words[v] for v in tgt_idx]))
-                #break
                 if set(knn_sort).intersection(tgt_idx):
                     correct +=1
                     correct_string = ' '
@@ -995,16 +928,12 @@ def compute_precision(gold_dict, src_word2ind, trg_word2ind, src_words, trg_word
         precisions[k] = correct / len(gold_dict)
     return  precisions
 
-
-
-
 def test_csls():
     toy_scores = np.array([
         [1, 1, 1, 1],
         [1, 0, 0, 0],
         [0, 2, 2, 0]
     ])
-
     csls(toy_scores, 2)
 
 def csls(scores, knn = 5):
@@ -1021,11 +950,9 @@ def csls(scores, knn = 5):
             # TODO: There must be a faster way to do this slicing
             if axis == 1:
                 nghbs = nghbs[:,-knn:]
-                #print(nghbs.shape)
                 nghbs_score = np.concatenate([row[indices] for row, indices in zip(scores, nghbs)]).reshape(nghbs.shape)
             else:
                 nghbs = nghbs[-knn:,:].T
-                #print(nghbs.shape)
                 nghbs_score = np.concatenate([col[indices] for col, indices in zip(scores.T, nghbs)]).reshape(nghbs.shape)
 
             return nghbs_score.mean(axis = 1)
@@ -1061,33 +988,11 @@ def compute_accuracy(gold_dict, src_word2ind, trg_word2ind, src_words, trg_words
         gold_dict is given as dict of *indices* of words.
 
     """
-    # TODO: Generalize to compute Prec @5, @10.
-    # Read dictionary and compute coverage
-#     dictf = open(args.dictionary, encoding=args.encoding, errors='surrogateescape')
-#     src2trg = collections.defaultdict(set)
-#     oov = set()
-#     vocab = set()
-#     for line in dictf:
-#         src, trg = line.split()
-#         try:
-#             src_ind = src_word2ind[src]
-#             trg_ind = trg_word2ind[trg]
-#             src2trg[src_ind].add(trg_ind)
-#             vocab.add(src)
-#         except KeyError:
-#             oov.add(src)
-#     oov -= vocab  # If one of the translation options is in the vocabulary, then the entry is not an oov
-#     coverage = len(src2trg) / (len(src2trg) + len(oov))
-
     oov = set()
     correct = 0
     n,m = scores.shape # The actual size of mapping computed, might be smaller that total size of dict
     for src_idx,tgt_idx in gold_dict.items():
-            #srx_idx = src_word2ind[src_w]
-        #tgt_idxs = set([trg_word2ind[w] for w in tgt_w])
-        # if src_idx >
         np.any([e<m for e in tgt_idx])
-
         if src_idx > n or np.all([e>m for e in tgt_idx]):#Src word not in mapping
             oov.add(src_idx)
             continue
@@ -1095,8 +1000,6 @@ def compute_accuracy(gold_dict, src_word2ind, trg_word2ind, src_words, trg_words
             print(k, src_idx, tgt_idx)
             knn = np.argpartition(scores[src_idx,:], -k)[-k:]
             knn_sort = knn[np.argsort(-scores[src_idx,knn])] # With - to get descending order
-            #print(src_words[src_idx], knn_sort, ' '.join([trg_words[v] for v in tgt_idx]))
-            #break
             if set(knn_sort).intersection(tgt_idx):
                 correct +=1
 
