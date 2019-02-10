@@ -281,7 +281,7 @@ class bilingual_mapping():
         # Get the IIVs
         if any_oov and iov_mode == 'projection' and oov_mode == 'projection':
             # Both are projected
-            xt_hat = np.concatenate([self.xt,self.xt_oov])@self.mapping
+            xt_hat = np.concatenate([self.xt,self.xt_oov])@self.mapping.T
         else:
             # Will treat IIV and OOVs differently
             if iov_mode == 'barycentric':
