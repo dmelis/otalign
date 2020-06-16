@@ -29,7 +29,11 @@ cd otalign
 pip3 install -e ./
 ```
 
-Copy data to local dirs (Optional, can also be specified via arguments)
+## Getting Datasets
+
+Data for the 'Conneau' task can be obtained via the [MUSE](https://github.com/facebookresearch/MUSE) repo, and data for the 'Dinu' task can be obtained via the [VecMap](https://github.com/artetxem/vecmap) repo.
+
+Copy data to local dirs (alternatively, the paths can be explicitly provided via arguments).
 
 ```
 cp -r /path/to/MUSE/dir/data/* ./data/raw/MUSE/

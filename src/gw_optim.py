@@ -556,7 +556,7 @@ class gromov_wass_solver():
 
             time_G = time() - start
 
-            if it % 10 == 0:
+            if it % print_every == 0:
                 # we can speed up the process by checking for the error only all
                 # the 10th iterations
                 dist = gwloss(constC, hC1, hC2, T)
@@ -575,10 +575,10 @@ class gromov_wass_solver():
                 else:
                     accs = {1: np.nan, 5: np.nan, 10: np.nan}
 
+                ent_t = self.compute_gamma_entropy(T)
                 if verbose:
                     if it % 200 == 0:
                         self.print_header()
-                    ent_t = self.compute_gamma_entropy(T)
                     self.print_step(it, dist, ent_t, err, time_G, time() - start, accs = accs)
 
                 self.history.append((it, dist, ent_t, 100 * err,
@@ -586,12 +586,7 @@ class gromov_wass_solver():
 
             it += 1
 
-        # plt.ioff() # To plot interactively during training
         plt.close('all')
-        # if log:
-        #     log['gw_dist'] = gwloss(constC, hC1, hC2, T)
-        #     return T, log
-        # else:
         if self.gpu:
             return T.asarray()
         else:
