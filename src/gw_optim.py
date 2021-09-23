@@ -290,7 +290,7 @@ class gromov_wass_solver():
             it, dist, ent_t, err, 100*accs[1], 100*accs[10], time_G, time_total)
         else:
             row = '{:5} {:10.2e} {:10.2e} {:10.2e} {:8.4f} {:8.4f}' .format(
-            it, dist, ent_t, err, time_G, total_time)
+            it, dist, ent_t, err, time_G, time_total)
         print(row)
 
     def plot_history(self, save_path=None):
